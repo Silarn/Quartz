@@ -198,7 +198,12 @@ function Quartz3:ChatCommand(input)
 			InterfaceOptionsFrame_OpenToCategory(Quartz3.optFrames.Profiles)
 			InterfaceOptionsFrame_OpenToCategory(Quartz3.optFrames.Quartz3)
 		else
-			Settings.OpenToCategory("Quartz 3")
+			local category = Settings.GetCategory("Quartz 3")
+			if category then
+				Settings.OpenToCategory(category:GetID())
+			else
+				LibStub("AceConfigDialog-3.0"):Open("Quartz3")
+			end
 		end
 	else
 		LibStub("AceConfigCmd-3.0").HandleCommand(Quartz3, "quartz", "Quartz3", input)

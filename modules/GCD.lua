@@ -113,10 +113,12 @@ function GCD:CheckGCD(event, unit, guid, spell)
 		else
 			start, dur = GetSpellCooldown(spell)
 		end
-		if dur and dur > 0 and dur <= 1.5 then
-			starttime = start
-			duration = dur
-			gcdbar:Show()
+		if dur and canaccessvalue(dur) then
+			if dur > 0 and dur <= 1.5 then
+				starttime = start
+				duration = dur
+				gcdbar:Show()
+			end
 		end
 	end
 end

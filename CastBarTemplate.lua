@@ -74,46 +74,54 @@ end
 local function OnUpdate(self)
 	local currentTime = GetTime()
 	local startTime, endTime, delay = self.startTime, self.endTime, self.delay
+	local durationObject = self.duration
 	local db = self.config
 	if self.channeling or self.casting then
-		local perc, remainingTime, delayFormat, delayFormatTime
-		if self.casting then
-			local showTime = min(currentTime, endTime)
-			remainingTime = endTime - showTime
-			perc = (showTime - startTime) / (endTime - startTime)
-
-			delayFormat, delayFormatTime = "|cffff0000+%.1f|cffffffff %s", "|cffff0000+%.1f|cffffffff %s / %s"
-		elseif self.channeling then
-			remainingTime = endTime - currentTime
-			perc = remainingTime / (endTime - startTime)
-
-			delayFormat, delayFormatTime = "|cffff0000-%.1f|cffffffff %s", "|cffff0000-%.1f|cffffffff %s / %s"
-		end
-
-		self.Bar:SetValue(perc)
-		self.Spark:ClearAllPoints()
-		self.Spark:SetPoint("CENTER", self.Bar, "LEFT", perc * self.Bar:GetWidth(), 0)
-
-		local timeTextValue = db.casttimecountup and ((endTime - startTime) - remainingTime) or remainingTime
-		if delay and delay ~= 0 then
-			if db.hidecasttime then
-				self.TimeText:SetFormattedText(delayFormat, delay, format(TimeFmt(timeTextValue)))
-			else
-				self.TimeText:SetFormattedText(delayFormatTime, delay, format(TimeFmt(timeTextValue)), format(TimeFmt(endTime - startTime, true)))
+		local remainingTime, delayFormat, delayFormatTime
+		if canaccessvalue(startTime) then
+			endTime = endTime / 1000
+			startTime = startTime / 1000
+			local perc
+			if self.casting then
+				local showTime = min(currentTime, endTime)
+				remainingTime = endTime - showTime
+				perc = (showTime - startTime) / (endTime - startTime)
+			elseif self.channeling then
+				remainingTime = endTime - currentTime
+				perc = remainingTime / (endTime - startTime)
 			end
+
+			self.Bar:SetValue(perc)
 		else
-			if db.hidecasttime then
-				self.TimeText:SetFormattedText(TimeFmt(timeTextValue))
+			if durationObject then
+				remainingTime = durationObject:GetRemainingDuration()
 			else
-				self.TimeText:SetFormattedText("%s / %s", format(TimeFmt(timeTextValue)), format(TimeFmt(endTime - startTime, true)))
+				remainingTime = 0
 			end
 		end
-
-		if currentTime > endTime then
-			self.casting, self.channeling = nil, nil
-			self.fadeOut = true
-			self.stopTime = currentTime
+		self.Spark:ClearAllPoints()
+		self.Spark:SetPoint("CENTER", self.Bar, "RIGHT")
+		delayFormat, delayFormatTime = "|cffff0000+%.1f|cffffffff %.1f", "|cffff0000+%.1f|cffffffff %.1f / %s"
+		if remainingTime ~= nil then
+			if delay and delay ~= 0 then
+				if db.hidecasttime or not canaccessvalue(endTime) then
+					self.TimeText:SetFormattedText(delayFormat, delay, remainingTime)
+				elseif canaccessvalue(endTime) then
+					self.TimeText:SetFormattedText(delayFormatTime, delay, remainingTime, format(TimeFmt(endTime - startTime, true)))
+				end
+			else
+				if db.hidecasttime or not canaccessvalue(endTime) then
+					self.TimeText:SetFormattedText('%.1f', remainingTime)
+				elseif canaccessvalue(endTime) then
+					self.TimeText:SetFormattedText("%.1f / %s", remainingTime, format(TimeFmt(endTime - startTime, true)))
+				end
+			end
 		end
+		-- if canaccessvalue(remainingTime) and remainingTime <= 0 then
+		-- 	self.casting, self.channeling = nil, nil
+		-- 	self.fadeOut = true
+		-- 	self.stopTime = currentTime
+		-- end
 	elseif self.fadeOut then
 		self.Spark:Hide()
 		local alpha
@@ -163,18 +171,28 @@ local function ToggleCastNotInterruptible(self, notInterruptible, init)
 	if self.unit == "player" and not init then return end
 	local db = self.config
 
-	if notInterruptible and db.noInterruptChangeColor then
-		self.Bar:SetStatusBarColor(unpack(db.noInterruptColor))
-	end
+	local r1, g1, b1, a1, r2, g2, a2, b2, r, g, b, a
+	if db.noInterruptChangeColor then
+		-- r1, g1, b1, a1 = unpack(db.noInterruptColor)
+		-- r2, g2, b2, a2 = unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor)
+		-- r = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, r1, r2)
+		-- g = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, g1, g2)
+		-- b = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, b1, b2)
+		-- a = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, a1 or 1, a2 or 1)
+		-- self.Bar:SetStatusBarColor(r, g, b, a)
 
-	local r, g, b, a
-	if notInterruptible and db.noInterruptChangeBorder then
 		self.backdrop.edgeFile = media:Fetch("border", db.noInterruptBorder)
-		r,g,b = unpack(db.noInterruptBorderColor)
-		a = db.noInterruptBorderAlpha
+		r1, g1, b1 = unpack(db.noInterruptBorderColor)
+		a1 = db.noInterruptBorderAlpha
+		r2, g2, b2 = unpack(Quartz3.db.profile.bordercolor)
+		a2 = Quartz3.db.profile.borderalpha
+		r = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, r1, r2)
+		g = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, g1, g2)
+		b = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, b1, b2)
+		a = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, a1 or 1, a2 or 1)
 	else
 		self.backdrop.edgeFile = media:Fetch("border", db.border)
-		r,g,b = unpack(Quartz3.db.profile.bordercolor)
+		r, g, b = unpack(Quartz3.db.profile.bordercolor)
 		a = Quartz3.db.profile.borderalpha
 	end
 
@@ -188,9 +206,25 @@ local function ToggleCastNotInterruptible(self, notInterruptible, init)
 	r, g, b = unpack(Quartz3.db.profile.backgroundcolor)
 	self:SetBackdropColor(r, g, b, Quartz3.db.profile.backgroundalpha)
 
+	if self.BorderShield then
+		if db.noInterruptShield and not db.hideicon then
+			if(self.BorderShield.SetAlphaFromBoolean) then
+				self.BorderShield:SetAlphaFromBoolean(notInterruptible, 1, 0)
+			else
+				self.BorderShield:SetShown(notInterruptible)
+			end
+		else
+			self.BorderShield:Hide()
+		end
+	end
+
 	if self.Shield then
-		if notInterruptible and db.noInterruptShield and not db.hideicon then
-			self.Shield:Show()
+		if db.noInterruptShield and not db.hideicon then
+			if(self.Shield.SetAlphaFromBoolean) then
+				self.Shield:SetAlphaFromBoolean(notInterruptible, 1, 0)
+			else
+				self.Shield:SetShown(notInterruptible)
+			end
 		else
 			self.Shield:Hide()
 		end
@@ -223,11 +257,11 @@ function CastBarTemplate:UNIT_SPELLCAST_START(event, unit, guid, spellID)
 	end
 	local db = self.config
 
-	local spell, displayName, icon, startTime, endTime, _, notInterruptible, numStages
+	local spell, displayName, icon, startTime, endTime, _, notInterruptible, isEmpowered, numStages
 	if event == "UNIT_SPELLCAST_START" then
 		spell, displayName, icon, startTime, endTime, _, _, notInterruptible = UnitCastingInfo(unit)
 	else -- self.channeling
-		spell, displayName, icon, startTime, endTime, _, notInterruptible, _, _, numStages = UnitChannelInfo(unit)
+		spell, displayName, icon, startTime, endTime, _, notInterruptible, isEmpowered, _, numStages = UnitChannelInfo(unit)
 		-- channeling spells sometimes just display "Channeling" - this is not wanted
 		displayName = spell
 	end
@@ -253,17 +287,24 @@ function CastBarTemplate:UNIT_SPELLCAST_START(event, unit, guid, spellID)
 		self.casting, self.channeling, self.chargeSpell = nil, true, nil
 	end
 
-	startTime = startTime / 1000
-	endTime = endTime / 1000
 	self.startTime = startTime
 	self.endTime = endTime
 	self.delay = 0
 	self.fadeOut = nil
 	self.numStages = numStages
+	self.empowered = isEmpowered
 
 	self.Bar:SetStatusBarColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
-
-	self.Bar:SetValue(self.casting and 0 or 1)
+	if canaccessvalue(startTime) then
+		self.Bar:SetValue(self.casting and 0 or 1)
+	else
+		local duration = self.empowered and UnitEmpoweredChannelDuration(unit) or (self.channeling and UnitChannelDuration(unit) or UnitCastingDuration(unit))
+		if duration then
+			local direction = self.channeling and Enum.StatusBarTimerDirection.RemainingTime or Enum.StatusBarTimerDirection.ElapsedTime
+			self.duration = duration
+			self.Bar:SetTimerDuration(duration, Enum.StatusBarInterpolation.Immediate, direction)
+		end
+	end
 	self:Show()
 	self:SetAlpha(db.alpha)
 
@@ -271,8 +312,10 @@ function CastBarTemplate:UNIT_SPELLCAST_START(event, unit, guid, spellID)
 
 	self.Spark:Show()
 
-	if (icon == "Interface\\Icons\\Temp" or icon == 136235) and Quartz3.db.profile.hidesamwise then
-		icon = 136243
+	if canaccessvalue(icon) then
+		if (icon == "Interface\\Icons\\Temp" or icon == 136235) and Quartz3.db.profile.hidesamwise then
+			icon = 136243
+		end
 	end
 	self.Icon:SetTexture(icon)
 
@@ -299,8 +342,8 @@ function CastBarTemplate:UNIT_SPELLCAST_STOP(event, unit)
 		return
 	end
 
-	self.Bar:SetValue(self.casting and 1.0 or 0)
-	self.Bar:SetStatusBarColor(unpack(Quartz3.db.profile.completecolor))
+	self.Bar:SetMinMaxValues(0, 1)
+	self.Bar:SetValue(1)
 
 	self.casting, self.channeling = nil, nil
 	self.fadeOut = true
@@ -321,7 +364,8 @@ function CastBarTemplate:UNIT_SPELLCAST_FAILED(event, unit)
 	if not self.stopTime then
 		self.stopTime = GetTime()
 	end
-	self.Bar:SetValue(1.0)
+	self.Bar:SetMinMaxValues(0, 1)
+	self.Bar:SetValue(1)
 	self.Bar:SetStatusBarColor(unpack(Quartz3.db.profile.failcolor))
 
 	self.TimeText:SetText("")
@@ -338,7 +382,8 @@ function CastBarTemplate:UNIT_SPELLCAST_INTERRUPTED(event, unit)
 	if not self.stopTime then
 		self.stopTime = GetTime()
 	end
-	self.Bar:SetValue(1.0)
+	self.Bar:SetMinMaxValues(0, 1)
+	self.Bar:SetValue(1)
 	self.Bar:SetStatusBarColor(unpack(Quartz3.db.profile.failcolor))
 
 	self.TimeText:SetText("")
@@ -362,15 +407,24 @@ function CastBarTemplate:UNIT_SPELLCAST_DELAYED(event, unit)
 		return self:Hide()
 	end
 
-	startTime = startTime / 1000
-	endTime = endTime / 1000
-	self.startTime = startTime
-	self.endTime = endTime
 
-	if self.casting and not self.chargeSpell then
-		self.delay = (self.delay or 0) + (startTime - (oldStart or startTime))
+	self.Bar:SetStatusBarColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
+	if canaccessvalue(startTime) then
+		self.startTime = startTime
+		self.endTime = endTime
+
+		if self.casting and not self.chargeSpell then
+			self.delay = (self.delay or 0) + (startTime - (oldStart or startTime)) / 1000
+		else
+			self.delay = (self.delay or 0) + ((oldStart or startTime) - startTime) / 1000
+		end
 	else
-		self.delay = (self.delay or 0) + ((oldStart or startTime) - startTime)
+		local duration = self.empowered and UnitEmpoweredChannelDuration(unit) or (self.channeling and UnitChannelDuration(unit) or UnitCastingDuration(unit))
+		if duration then
+			local direction = self.channeling and Enum.StatusBarTimerDirection.RemainingTime or Enum.StatusBarTimerDirection.ElapsedTime
+			self.duration = duration
+			self.Bar:SetTimerDuration(duration, Enum.StatusBarInterpolation.Immediate, direction)
+		end
 	end
 
 	call(self, "UNIT_SPELLCAST_DELAYED", unit)
@@ -434,7 +488,7 @@ function CastBarTemplate:ApplySettings()
 	self.Bar:SetWidth(castbarwidth)
 	self.Bar:SetHeight(db.h)
 	self.Bar:SetStatusBarTexture(media:Fetch("statusbar", db.texture))
-	self.Bar:SetMinMaxValues(0, 1)
+	-- self.Bar:SetMinMaxValues(0, 1)
 
 	if db.hidetimetext then
 		self.TimeText:Hide()
