@@ -104,6 +104,8 @@ local defaults = {
 		Disease = {.55, .15, 0},
 		Curse = {1, 0, 1},
 
+		DispelColorCurve = C_CurveUtil.CreateColorCurve(),
+
 		bufftextcolor = {1,1,1},
 
 		timesort = true,
@@ -112,14 +114,20 @@ local defaults = {
 
 do
 	function OnUpdate(frame)
-		local currentTime = GetTime()
-		local endTime = frame.endTime
-		if currentTime > endTime then
+		local durationTimer = C_UnitAuras.GetAuraDuration("target", frame.auraID)
+		if not durationTimer then
 			Buff:UpdateBars()
 		else
-			local remaining = (currentTime - frame.startTime)
-			frame:SetValue(endTime - remaining)
-			frame.timetext:SetFormattedText(TimeFmt(endTime - currentTime))
+			duration = durationTimer:GetRemainingDuration()
+			if canaccessvalue(duration) then
+				if duration > 0 then
+					frame.timetext:SetFormattedText(TimeFmt(duration))
+				else
+					frame.timetext:SetText("")
+				end
+			else
+				frame.timetext:SetFormattedText("%ds", duration)
+			end
 		end
 	end
 end
@@ -770,6 +778,20 @@ function Buff:OnInitialize()
 		db.bufftextcolor = {1,1,1}
 	end
 
+	local DEBUFF_DISPLAY_COLOR_INFO = {
+	  [0] = CreateColor(unpack(db.debuffcolor)),
+	  [1] = CreateColor(unpack(db.Magic)),
+	  [2] = CreateColor(unpack(db.Curse)),
+	  [3] = CreateColor(unpack(db.Disease)),
+	  [4] = CreateColor(unpack(db.Poison)),
+	  [9] = CreateColor(unpack(db.debuffcolor)), -- enrage
+	  [11] = CreateColor(unpack(db.debuffcolor)), -- bleed
+	}
+	db.DispelColorCurve:SetType(Enum.LuaCurveType.Step)
+	for i, c in pairs(DEBUFF_DISPLAY_COLOR_INFO) do
+	  db.DispelColorCurve:AddPoint(i, c)
+	end
+
 	self:SetEnabledState(Quartz3:GetModuleEnabled(MODNAME))
 	Quartz3:RegisterModuleOptions(MODNAME, getOptions, L["Buff"])
 end
@@ -892,17 +914,25 @@ do
 			end
 			if db.targetbuffs then
 				for i = 1, 32 do
-					local auraData = C_UnitAuras.GetBuffDataByIndex("target", i)
+					local auraData = C_UnitAuras.GetBuffDataByIndex("target", i, "PLAYER HELPFUL")
 					if (not auraData) or (not auraData.name) then
 						break
 					end
-					local remaining = auraData.expirationTime and (auraData.expirationTime - GetTime()) or nil
-					if (auraData.sourceUnit == "player" or auraData.sourceUnit == "pet" or auraData.sourceUnit == "vehicle") and auraData.duration > 0 then
+					local durationTimer = C_UnitAuras.GetAuraDuration("target", auraData.auraInstanceID)
+					local hasDuration = false
+					if canaccessvalue(auraData.duration) and auraData.duration > 0 then
+						hasDuration = true
+					elseif not canaccessvalue(auraData.duration) then
+						hasDuration = true
+					end
+					-- if (auraData.sourceUnit == "player" or auraData.sourceUnit == "pet" or auraData.sourceUnit == "vehicle") then
+					if hasDuration then
 						local t = new()
 						tmp[#tmp+1] = t
+						t.id = auraData.auraInstanceID
 						t.name = auraData.name
 						t.texture = auraData.icon
-						t.duration = auraData.duration
+						t.duration = durationTimer
 						t.remaining = remaining
 						t.isbuff = true
 						t.applications = auraData.applications
@@ -911,56 +941,68 @@ do
 			end
 			if db.targetdebuffs then
 				for i = 1, 40 do
-					local auraData = C_UnitAuras.GetDebuffDataByIndex("target", i)
+					local auraData = C_UnitAuras.GetDebuffDataByIndex("target", i, "PLAYER HARMFUL")
 					if (not auraData) or (not auraData.name) then
 						break
 					end
-					local remaining = auraData.expirationTime and (auraData.expirationTime - GetTime()) or nil
-					if (auraData.sourceUnit == "player" or auraData.sourceUnit == "pet" or auraData.sourceUnit == "vehicle") and auraData.duration > 0 then
+					local durationTimer = C_UnitAuras.GetAuraDuration("target", auraData.auraInstanceID)
+					local hasDuration = false
+					if canaccessvalue(auraData.duration) and auraData.duration > 0 then
+						hasDuration = true
+					elseif not canaccessvalue(auraData.duration) then
+						hasDuration = true
+					end
+					-- if (auraData.sourceUnit == "player" or auraData.sourceUnit == "pet" or auraData.sourceUnit == "vehicle") then
+					if hasDuration then
 						local t = new()
 						tmp[#tmp+1] = t
+						t.id = auraData.auraInstanceID
 						t.name = auraData.name
 						t.texture = auraData.icon
-						t.duration = auraData.duration
+						t.duration = durationTimer
 						t.remaining = remaining
 						t.dispeltype = auraData.dispelName
 						t.applications = auraData.applications
 					end
 				end
 			end
-			sort(tmp, mysort)
+-- 			sort(tmp, mysort)
 			local maxindex = 0
 			for k=1,#tmp do
 				local v = tmp[k]
 				maxindex = k
 				local bar = targetbars[k]
-				if v.applications > 1 then
+-- 				if v.applications > 1 then
 					bar.text:SetFormattedText("%s (%s)", v.name, v.applications)
-				else
-					bar.text:SetText(v.name)
-				end
+-- 				else
+-- 					bar.text:SetText(v.name)
+-- 				end
 				bar.icon:SetTexture(v.texture)
-				local elapsed = (v.duration - v.remaining)
-				local startTime, endTime = (currentTime - elapsed), (currentTime + v.remaining)
-				if db.targetfixedduration > 0 then
-					startTime = endTime - db.targetfixedduration
-				end
-				bar.startTime = startTime
-				bar.endTime = endTime
-				bar:SetMinMaxValues(startTime, endTime)
+-- 				local elapsed = (v.duration - v.remaining)
+-- 				local startTime, endTime = (currentTime - elapsed), (currentTime + v.remaining)
+-- 				if db.targetfixedduration > 0 then
+-- 					startTime = endTime - db.targetfixedduration
+-- 				end
+-- 				bar.startTime = startTime
+-- 				bar.endTime = endTime
+				bar.duration = v.duration
+				bar.auraID = v.id
+				bar:SetTimerDuration(v.duration)
 				bar:Show()
 				if v.isbuff then
 					bar:SetStatusBarColor(unpack(db.buffcolor))
 				else
+					bar:SetStatusBarColor(unpack(db.debuffcolor))
 					if db.debuffsbytype then
-						local dispeltype = v.dispeltype
-						if dispeltype then
-							bar:SetStatusBarColor(unpack(db[dispeltype]))
+						color = C_UnitAuras.GetAuraDispelTypeColor("target", v.id, db.DispelColorCurve)
+						if color then
+							r, g, b = color:GetRGB()
+							bar:SetBackdropColor(r, g, b)
 						else
-							bar:SetStatusBarColor(unpack(db.debuffcolor))
+							bar:SetBackdropColor(unpack(db.debuffcolor))
 						end
 					else
-						bar:SetStatusBarColor(unpack(db.debuffcolor))
+						bar:SetBackdropColor(unpack(db.debuffcolor))
 					end
 				end
 			end
@@ -1255,11 +1297,11 @@ do
 			text:ClearAllPoints()
 			text:SetPoint("LEFT", bar, "LEFT", 2, 0)
 			text:SetJustifyH("LEFT")
-			if db.bufftimetext then
-				text:SetWidth(width - normaltimewidth)
-			else
+-- 			if db.bufftimetext then
+-- 				text:SetWidth(width - normaltimewidth)
+-- 			else
 				text:SetWidth(width)
-			end
+-- 			end
 		else
 			text:Hide()
 		end

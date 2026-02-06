@@ -275,9 +275,9 @@ function CastBarTemplate:UNIT_SPELLCAST_START(event, unit, guid, spellID)
 
 	local isChargeSpell = numStages and numStages > 0
 
-	if isChargeSpell then
-		endTime = endTime + GetUnitEmpowerHoldAtMaxTime(self.unit)
-	end
+-- 	if isChargeSpell then
+-- 		endTime = endTime + GetUnitEmpowerHoldAtMaxTime(self.unit)
+-- 	end
 
 	if event == "UNIT_SPELLCAST_START" then
 		self.casting, self.channeling, self.chargeSpell = true, nil, nil
