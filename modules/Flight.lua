@@ -138,21 +138,26 @@ function Flight:BeginFlight(duration, destination)
 	if not Player:IsEnabled() then return end
 
 	Player.Bar.casting = true
+	local flightDuration = C_DurationUtil.CreateDuration()
 	Player.Bar.startTime = GetTime()
 	Player.Bar.endTime = GetTime() + duration
+	flightDuration:SetTimeSpan(Player.Bar.startTime, Player.Bar.endTime)
+	Player.Bar.duration = flightDuration
+
 	Player.Bar.delay = 0
 	Player.Bar.fadeOut = nil
 	if db.deplete then
 		Player.Bar.casting = nil
 		Player.Bar.channeling = true
+		Player.Bar.Bar:SetTimerDuration(flightDuration, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.RemainingTime)
 	else
 		Player.Bar.casting = true
 		Player.Bar.channeling = nil
+		Player.Bar.Bar:SetTimerDuration(flightDuration, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.ElapsedTime)
 	end
 
 	Player.Bar.Bar:SetStatusBarColor(unpack(db.color))
 
-	Player.Bar.Bar:SetValue(0)
 	Player.Bar:Show()
 	Player.Bar:SetAlpha(Player.db.profile.alpha)
 

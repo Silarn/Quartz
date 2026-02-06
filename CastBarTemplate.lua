@@ -78,7 +78,7 @@ local function OnUpdate(self)
 	local db = self.config
 	if self.channeling or self.casting then
 		local remainingTime, delayFormat, delayFormatTime
-		if canaccessvalue(startTime) then
+		if canaccessvalue(startTime) and not durationObject then
 			endTime = endTime / 1000
 			startTime = startTime / 1000
 			local perc
@@ -117,11 +117,11 @@ local function OnUpdate(self)
 				end
 			end
 		end
-		-- if canaccessvalue(remainingTime) and remainingTime <= 0 then
-		-- 	self.casting, self.channeling = nil, nil
-		-- 	self.fadeOut = true
-		-- 	self.stopTime = currentTime
-		-- end
+		if canaccessvalue(remainingTime) and remainingTime <= 0 then
+			self.casting, self.channeling = nil, nil
+			self.fadeOut = true
+			self.stopTime = currentTime
+		end
 	elseif self.fadeOut then
 		self.Spark:Hide()
 		local alpha
@@ -297,6 +297,7 @@ function CastBarTemplate:UNIT_SPELLCAST_START(event, unit, guid, spellID)
 	self.Bar:SetStatusBarColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
 	if canaccessvalue(startTime) then
 		self.Bar:SetValue(self.casting and 0 or 1)
+		self.duration = nil
 	else
 		local duration = self.empowered and UnitEmpoweredChannelDuration(unit) or (self.channeling and UnitChannelDuration(unit) or UnitCastingDuration(unit))
 		if duration then
@@ -345,7 +346,7 @@ function CastBarTemplate:UNIT_SPELLCAST_STOP(event, unit)
 	self.Bar:SetMinMaxValues(0, 1)
 	self.Bar:SetValue(1)
 
-	self.casting, self.channeling = nil, nil
+	self.casting, self.channeling, self.duration = nil, nil, nil
 	self.fadeOut = true
 	self.stopTime = GetTime()
 
@@ -361,6 +362,7 @@ function CastBarTemplate:UNIT_SPELLCAST_FAILED(event, unit)
 		return
 	end
 	self.fadeOut = true
+	self.duration = nil
 	if not self.stopTime then
 		self.stopTime = GetTime()
 	end
@@ -377,7 +379,7 @@ function CastBarTemplate:UNIT_SPELLCAST_INTERRUPTED(event, unit)
 	if unit ~= self.unit and not (self.unit == "player" and unit == "vehicle") then
 		return
 	end
-	self.casting, self.channeling, self.chargeSpell = nil, nil, nil
+	self.casting, self.channeling, self.chargeSpell, self.duration = nil, nil, nil, nil
 	self.fadeOut = true
 	if not self.stopTime then
 		self.stopTime = GetTime()
@@ -412,6 +414,7 @@ function CastBarTemplate:UNIT_SPELLCAST_DELAYED(event, unit)
 	if canaccessvalue(startTime) then
 		self.startTime = startTime
 		self.endTime = endTime
+		self.duration = nil
 
 		if self.casting and not self.chargeSpell then
 			self.delay = (self.delay or 0) + (startTime - (oldStart or startTime)) / 1000
