@@ -888,13 +888,14 @@ do
 
 	local function mysort(a,b)
 		if db.timesort then
-			if a.isbuff == b.isbuff then
-				return a.remaining < b.remaining
+			local a_duration, b_duration = a.duration:GetRemainingDuration(), b.duration:GetRemainingDuration()
+			if a.isbuff == b.isbuff and canaccessvalue(a_duration) and canaccessvalue(b_duration) then
+				return a_duration < b_duration
 			else
 				return a.isbuff
 			end
 		else
-			if a.isbuff == b.isbuff then
+			if a.isbuff == b.isbuff and canaccessvalue(a.name) and canaccessvalue(b.name) then
 				return a.name < b.name
 			else
 				return a.isbuff
@@ -968,7 +969,7 @@ do
 					end
 				end
 			end
--- 			sort(tmp, mysort)
+			sort(tmp, mysort)
 			local maxindex = 0
 			for k=1,#tmp do
 				local v = tmp[k]

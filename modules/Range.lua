@@ -49,14 +49,13 @@ do
 			if not castBar:IsVisible() or Player.Bar.fadeOut then
 				return f:SetScript("OnUpdate", nil)
 			end
-			if IsSpellInRange(spell, target) == 0 then
-				r, g, b = castBar:GetStatusBarColor()
-				modified = true
-				castBar:SetStatusBarColor(unpack(db.rangecolor))
-			elseif modified then
-				castBar:SetStatusBarColor(r,g,b)
-				modified, r, g, b = nil, nil, nil, nil
-			end
+			local inRange = IsSpellInRange(spell, target)
+			r1, g1, b1 = castBar:GetStatusBarTexture():GetVertexColor()
+			r2, g2, b2 = unpack(db.rangecolor)
+			r = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, r1, r2)
+			g = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, g1, g2)
+			b = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, b1, b2)
+			castBar:GetStatusBarTexture():SetVertexColor(r, g, b)
 		end
 	end
 end
@@ -113,7 +112,7 @@ function Range:UNIT_SPELLCAST_SENT(event, unit, name)
 	if unit ~= "player" then
 		return
 	end
-	if name then
+	if name and canaccessvalue(name) then
 		if name == UnitName("player") then
 			target = "player"
 		elseif name == UnitName("target") then
