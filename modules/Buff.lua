@@ -103,6 +103,8 @@ local defaults = {
 		Magic = {0, 0, 1},
 		Disease = {.55, .15, 0},
 		Curse = {1, 0, 1},
+		Enrage = {1, 0.2, 0},
+		Bleed = {0.7, 0, 0},
 
 		DispelColorCurve = C_CurveUtil.CreateColorCurve(),
 
@@ -784,8 +786,8 @@ function Buff:OnInitialize()
 	  [2] = CreateColor(unpack(db.Curse)),
 	  [3] = CreateColor(unpack(db.Disease)),
 	  [4] = CreateColor(unpack(db.Poison)),
-	  [9] = CreateColor(unpack(db.debuffcolor)), -- enrage
-	  [11] = CreateColor(unpack(db.debuffcolor)), -- bleed
+	  [9] = CreateColor(unpack(db.Enrage)), -- enrage
+	  [11] = CreateColor(unpack(db.Bleed)), -- bleed
 	}
 	db.DispelColorCurve:SetType(Enum.LuaCurveType.Step)
 	for i, c in pairs(DEBUFF_DISPLAY_COLOR_INFO) do
@@ -990,19 +992,22 @@ do
 				bar:SetTimerDuration(v.duration)
 				bar:Show()
 				if v.isbuff then
-					bar:SetStatusBarColor(unpack(db.buffcolor))
+-- 					bar:SetStatusBarColor(unpack(db.buffcolor))
+					bar:GetStatusBarTexture():SetVertexColor(unpack(db.buffcolor))
 				else
-					bar:SetStatusBarColor(unpack(db.debuffcolor))
 					if db.debuffsbytype then
 						color = C_UnitAuras.GetAuraDispelTypeColor("target", v.id, db.DispelColorCurve)
 						if color then
 							r, g, b = color:GetRGB()
-							bar:SetBackdropColor(r, g, b)
+-- 							bar:SetBackdropColor(r, g, b)
+							bar:GetStatusBarTexture():SetVertexColor(r, g, b)
 						else
-							bar:SetBackdropColor(unpack(db.debuffcolor))
+-- 							bar:SetBackdropColor(unpack(db.debuffcolor))
+							bar:GetStatusBarTexture():SetVertexColor(unpack(db.debuffcolor))
 						end
 					else
-						bar:SetBackdropColor(unpack(db.debuffcolor))
+-- 						bar:SetBackdropColor(unpack(db.debuffcolor))
+						bar:GetStatusBarTexture():SetVertexColor(unpack(db.debuffcolor))
 					end
 				end
 			end
@@ -1100,17 +1105,22 @@ do
 				bar:SetMinMaxValues(startTime, endTime)
 				bar:Show()
 				if v.isbuff then
-					bar:SetStatusBarColor(unpack(db.buffcolor))
+-- 					bar:SetStatusBarColor(unpack(db.buffcolor))
+					bar:GetStatusBarTexture():SetVertexColor(unpack(db.buffcolor))
 				else
 					if db.debuffsbytype then
-						local dispeltype = v.dispeltype
-						if dispeltype then
-							bar:SetStatusBarColor(unpack(db[dispeltype]))
+						color = C_UnitAuras.GetAuraDispelTypeColor("target", v.id, db.DispelColorCurve)
+						if color then
+							r, g, b = color:GetRGB()
+-- 							bar:SetBackdropColor(r, g, b)
+							bar:GetStatusBarTexture():SetVertexColor(r, g, b)
 						else
-							bar:SetStatusBarColor(unpack(db.debuffcolor))
+-- 							bar:SetBackdropColor(unpack(db.debuffcolor))
+							bar:GetStatusBarTexture():SetVertexColor(unpack(db.debuffcolor))
 						end
 					else
-						bar:SetStatusBarColor(unpack(db.debuffcolor))
+-- 						bar:SetBackdropColor(unpack(db.debuffcolor))
+						bar:GetStatusBarTexture():SetVertexColor(unpack(db.debuffcolor))
 					end
 				end
 			end

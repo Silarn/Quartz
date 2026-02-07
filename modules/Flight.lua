@@ -156,7 +156,8 @@ function Flight:BeginFlight(duration, destination)
 		Player.Bar.Bar:SetTimerDuration(flightDuration, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.ElapsedTime)
 	end
 
-	Player.Bar.Bar:SetStatusBarColor(unpack(db.color))
+-- 	Player.Bar.Bar:SetStatusBarColor(unpack(db.color))
+	Player.Bar.Bar:GetStatusBarTexture():SetVertexColor(unpack(db.color))
 
 	Player.Bar:Show()
 	Player.Bar:SetAlpha(Player.db.profile.alpha)

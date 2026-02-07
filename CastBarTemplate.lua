@@ -173,13 +173,14 @@ local function ToggleCastNotInterruptible(self, notInterruptible, init)
 
 	local r1, g1, b1, a1, r2, g2, a2, b2, r, g, b, a
 	if db.noInterruptChangeColor then
-		-- r1, g1, b1, a1 = unpack(db.noInterruptColor)
-		-- r2, g2, b2, a2 = unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor)
-		-- r = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, r1, r2)
-		-- g = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, g1, g2)
-		-- b = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, b1, b2)
-		-- a = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, a1 or 1, a2 or 1)
+		r1, g1, b1, a1 = unpack(db.noInterruptColor)
+		r2, g2, b2, a2 = unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor)
+		r = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, r1, r2)
+		g = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, g1, g2)
+		b = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, b1, b2)
+		a = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, a1 or 1, a2 or 1)
 		-- self.Bar:SetStatusBarColor(r, g, b, a)
+		self.Bar:GetStatusBarTexture():SetVertexColor(r, g, b, a)
 
 		self.backdrop.edgeFile = media:Fetch("border", db.noInterruptBorder)
 		r1, g1, b1 = unpack(db.noInterruptBorderColor)
@@ -294,7 +295,8 @@ function CastBarTemplate:UNIT_SPELLCAST_START(event, unit, guid, spellID)
 	self.numStages = numStages
 	self.empowered = isEmpowered
 
-	self.Bar:SetStatusBarColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
+-- 	self.Bar:SetStatusBarColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
+	self.Bar:GetStatusBarTexture():SetVertexColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
 	if canaccessvalue(startTime) then
 		self.Bar:SetValue(self.casting and 0 or 1)
 		self.duration = nil
@@ -368,7 +370,8 @@ function CastBarTemplate:UNIT_SPELLCAST_FAILED(event, unit)
 	end
 	self.Bar:SetMinMaxValues(0, 1)
 	self.Bar:SetValue(1)
-	self.Bar:SetStatusBarColor(unpack(Quartz3.db.profile.failcolor))
+-- 	self.Bar:SetStatusBarColor(unpack(Quartz3.db.profile.failcolor))
+	self.Bar:GetStatusBarTexture():SetVertexColor(unpack(Quartz3.db.profile.failcolor))
 
 	self.TimeText:SetText("")
 
@@ -386,7 +389,8 @@ function CastBarTemplate:UNIT_SPELLCAST_INTERRUPTED(event, unit)
 	end
 	self.Bar:SetMinMaxValues(0, 1)
 	self.Bar:SetValue(1)
-	self.Bar:SetStatusBarColor(unpack(Quartz3.db.profile.failcolor))
+-- 	self.Bar:SetStatusBarColor(unpack(Quartz3.db.profile.failcolor))
+	self.Bar:GetStatusBarTexture():SetVertexColor(unpack(Quartz3.db.profile.failcolor))
 
 	self.TimeText:SetText("")
 
@@ -410,7 +414,8 @@ function CastBarTemplate:UNIT_SPELLCAST_DELAYED(event, unit)
 	end
 
 
-	self.Bar:SetStatusBarColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
+-- 	self.Bar:SetStatusBarColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
+	self.Bar:GetStatusBarTexture():SetVertexColor(unpack(self.casting and Quartz3.db.profile.castingcolor or Quartz3.db.profile.channelingcolor))
 	if canaccessvalue(startTime) then
 		self.startTime = startTime
 		self.endTime = endTime
@@ -539,7 +544,7 @@ function CastBarTemplate:ApplySettings()
 		if position == "left" then
 			self.Text:SetPoint("LEFT", self.Bar, "LEFT", db.nametextx, db.nametexty)
 			self.Text:SetJustifyH("LEFT")
-			if db.hidetimetext or db.timetextposition ~= "right" then
+			if db.hidetimetext or db.timetextposition ~= "right" or not canaccessvalue(normaltimewidth) then
 				self.Text:SetWidth(castbarwidth)
 			else
 				self.Text:SetWidth(castbarwidth - normaltimewidth - 5)
@@ -553,7 +558,7 @@ function CastBarTemplate:ApplySettings()
 		else -- L["Right"]
 			self.Text:SetPoint("RIGHT", self.Bar, "RIGHT", -1 * db.nametextx, db.nametexty)
 			self.Text:SetJustifyH("RIGHT")
-			if db.hidetimetext or db.timetextposition ~= "left" then
+			if db.hidetimetext or db.timetextposition ~= "left" or not canaccessvalue(normaltimewidth) then
 				self.Text:SetWidth(castbarwidth)
 			else
 				self.Text:SetWidth(castbarwidth - normaltimewidth - 5)

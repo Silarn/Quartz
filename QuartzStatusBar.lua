@@ -27,6 +27,7 @@ function Quartz3:CreateStatusBar(name, parent)
 	local bar = setmetatable(CreateFrame("StatusBar", name, parent, "BackdropTemplate"), MetaTable)
 	bar.__texture = bar:CreateTexture(nil, "ARTWORK")
 	bar:SetStatusBarTexture(bar.__texture)
+	bar:SetStatusBarColor(0, 0, 0, 0)
 
 	DrawBar(bar)
 
