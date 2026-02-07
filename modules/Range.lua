@@ -50,12 +50,14 @@ do
 				return f:SetScript("OnUpdate", nil)
 			end
 			local inRange = IsSpellInRange(spell, target)
-			r1, g1, b1 = castBar:GetStatusBarTexture():GetVertexColor()
-			r2, g2, b2 = unpack(db.rangecolor)
-			r = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, r1, r2)
-			g = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, g1, g2)
-			b = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, b1, b2)
-			castBar:GetStatusBarTexture():SetVertexColor(r, g, b)
+			if inRange ~= nil then
+				r1, g1, b1 = castBar:GetStatusBarTexture():GetVertexColor()
+				r2, g2, b2 = unpack(db.rangecolor)
+				r = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, r1, r2)
+				g = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, g1, g2)
+				b = C_CurveUtil.EvaluateColorValueFromBoolean(inRange, b1, b2)
+				castBar:GetStatusBarTexture():SetVertexColor(r, g, b)
+			end
 		end
 	end
 end
