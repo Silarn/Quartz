@@ -516,7 +516,7 @@ function Player:AddStages(bar, numStages)
 	bar.StageTiers = {}
 
 	local sumDuration = 0
-	local stageMaxValue = (bar.endTime - bar.startTime) * 1000
+	local stageMaxValue = (bar.endTime - bar.startTime)
 
 	local castBarLeft = bar.Bar:GetLeft()
 	local castBarRight = bar.Bar:GetRight()
@@ -598,7 +598,7 @@ end
 
 function Player:UpdateStage(bar)
 	local maxStage = 0;
-	local stageValue = bar.Bar:GetValue() * (bar.endTime - bar.startTime) * 1000
+	local stageValue = bar.Bar:GetValue() * (bar.endTime - bar.startTime)
 	for i = 1, bar.NumStages do
 		if bar.StagePoints[i] then
 			if stageValue > bar.StagePoints[i] then

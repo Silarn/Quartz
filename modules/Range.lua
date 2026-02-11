@@ -114,15 +114,15 @@ function Range:UNIT_SPELLCAST_SENT(event, unit, name)
 	if unit ~= "player" then
 		return
 	end
-	player_name = UnitName("player")
-	target_name = UnitName("target")
-	focus_name = UnitName("focus")
 	if name and canaccessvalue(name) then
-		if canaccessvalue(player_name) and name == player_name then
+	local playerName = UnitName("player")
+	local targetName = UnitName("target")
+	local focusName = UnitName("focus")
+		if canaccessvalue(playerName) and name == playerName then
 			target = "player"
-		elseif canaccessvalue(target_name) and name == target_name then
+		elseif canaccessvalue(targetName) and name == targetName then
 			target = "target"
-		elseif canaccessvalue(focus_name) and name == focus_name then
+		elseif canaccessvalue(focusName) and name == focusName then
 			target = "focus"
 		else
 			target = nil
