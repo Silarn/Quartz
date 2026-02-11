@@ -929,7 +929,7 @@ do
 						hasDuration = true
 					end
 					-- if (auraData.sourceUnit == "player" or auraData.sourceUnit == "pet" or auraData.sourceUnit == "vehicle") then
-					if hasDuration then
+					if hasDuration and durationTimer ~= nil then
 						local t = new()
 						tmp[#tmp+1] = t
 						t.id = auraData.auraInstanceID
@@ -952,11 +952,11 @@ do
 					local hasDuration = false
 					if canaccessvalue(auraData.duration) and auraData.duration > 0 then
 						hasDuration = true
-					elseif not canaccessvalue(auraData.duration) then
+					elseif not canaccessvalue(auraData.duration) and durationTimer ~= nil then
 						hasDuration = true
 					end
 					-- if (auraData.sourceUnit == "player" or auraData.sourceUnit == "pet" or auraData.sourceUnit == "vehicle") then
-					if hasDuration then
+					if hasDuration and durationTimer ~= nil then
 						local t = new()
 						tmp[#tmp+1] = t
 						t.id = auraData.auraInstanceID
@@ -990,7 +990,7 @@ do
 -- 				bar.endTime = endTime
 				bar.duration = v.duration
 				bar.auraID = v.id
-				bar:SetTimerDuration(v.duration)
+				bar:SetTimerDuration(v.duration, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.RemainingTime)
 				bar:Show()
 				if v.isbuff then
 -- 					bar:SetStatusBarColor(unpack(db.buffcolor))
